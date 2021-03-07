@@ -34,7 +34,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
   FlutterSoundPlayer _mPlayer = FlutterSoundPlayer();
 
   // file
-  String _audioFilePath = '';
+  String _audioFilePath;
   String _audioFilename = '';
 
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
@@ -63,9 +63,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
 
   initPermission() async {
     final status = await Permission.storage.request();
-    if (status != PermissionStatus.granted) {
-      throw RecordingPermissionException('Storage permission not granted');
-    }
+    return status != PermissionStatus.granted;
   }
 
   Future initPlayer() async {
@@ -157,10 +155,18 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
   }
 
   void openFilePicker() async {
-    final filePicker = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['wav', 'mp3', 'ogg', 'm4a'],
-    );
+    var filePicker;
+    try {
+      filePicker = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['wav', 'mp3', 'ogg', 'm4a'],
+      );
+    } on Exception catch (e) {
+      // user not allow file permission
+      print(e);
+      return;
+    }
+
     if (filePicker != null) {
       var selectFile = filePicker.files.single;
 
@@ -237,10 +243,13 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
                               Icons.attach_file,
                               color: Colors.indigo,
                             ),
-                            Text(
-                              _audioFilename,
-                              style: TextStyle(color: Colors.indigo),
-                            ),
+                            Container(
+                                constraints: BoxConstraints(maxWidth: 150),
+                                child: Text(_audioFilename,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: TextStyle(color: Colors.indigo))),
                           ],
                         ),
                       ),
@@ -266,7 +275,9 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
                               IconButton(
                                 icon: Icon(Icons.upload_file),
                                 color: Colors.indigo,
-                                onPressed: openFilePicker,
+                                onPressed: _mPlayer.isPlaying == false
+                                    ? openFilePicker
+                                    : null,
                               ),
                             ],
                           ),

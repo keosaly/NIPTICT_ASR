@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:khmerasr/ui/AnimationScreen.dart';
 import 'package:khmerasr/ui/widget/MainPage.dart';
+import 'package:khmerasr/utils/HexColor.dart';
 
 void main() => runApp(MyApp());
 
@@ -17,8 +18,7 @@ class _MyAppState extends State<MyApp> {
         home: Material(
             child: Stack(children: <Widget>[
           Scaffold(body: MainPage()),
-          IgnorePointer(
-              child: AnimationScreen(color: Theme.of(context).accentColor))
+          IgnorePointer(child: AnimationScreen(color: HexColor('#9fcaf5')))
         ])));
   }
 }

@@ -87,15 +87,20 @@ class _SpeechRecognitionScreenState extends State<SpeechRecognitionScreen> {
     await _webSocketChannel.sink.close();
   }
 
-  Future<void> _openRecorder() async {
-    var status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      throw RecordingPermissionException('Microphone permission not granted');
+  Future<bool> _openRecorder() async {
+    var status = await initPermission();
+    if (status == true) {
+      await _recorder.openAudioSession();
+      setState(() {
+        _recorderIsInited = true;
+      });
     }
-    await _recorder.openAudioSession();
-    setState(() {
-      _recorderIsInited = true;
-    });
+    return status;
+  }
+
+  Future<bool> initPermission() async {
+    var status = await Permission.microphone.request();
+    return status == PermissionStatus.granted;
   }
 
   Future<void> stopRecorder() async {
@@ -110,8 +115,6 @@ class _SpeechRecognitionScreenState extends State<SpeechRecognitionScreen> {
   }
 
   Future<void> record() async {
-    assert(_recorderIsInited);
-
     var status = await checkInternetConnection();
     if (status == false) {
       showErrorToast(context, 'មិនមានការតភ្ជាប់អ៊ីនធឺណិតទេ!');
@@ -145,15 +148,14 @@ class _SpeechRecognitionScreenState extends State<SpeechRecognitionScreen> {
     setState(() {});
   }
 
-  _Fn getRecorderFn() {
-    if (!_recorderIsInited) {
-      return null;
+  Future<void> getRecorderFn() async {
+    if (_recorderIsInited == false) {
+      var status = await _openRecorder();
+      if (status == false) {
+        return;
+      }
     }
-    return _recorder.isStopped
-        ? record
-        : () {
-            stopRecorder().then((value) => setState(() {}));
-          };
+    _recorder.isStopped ? record() : stopRecorder();
   }
 
   @override
@@ -232,14 +234,17 @@ class _SpeechRecognitionScreenState extends State<SpeechRecognitionScreen> {
                               IconButton(
                                   icon: Icon(Icons.delete),
                                   color: Colors.indigo,
-                                  onPressed: () {
-                                    _beforeResult = '';
-                                    _previousResult = '';
-                                    _textController.clear();
-                                    _stopwatch.reset();
+                                  onPressed: _recorder.isRecording
+                                      ? null
+                                      : () {
+                                          _beforeResult = '';
+                                          _previousResult = '';
+                                          _textController.clear();
+                                          _stopwatch.reset();
 
-                                    showToast(context, "អត្ថបទត្រូវបានលុប");
-                                  }),
+                                          showToast(
+                                              context, "អត្ថបទត្រូវបានលុប");
+                                        }),
                             ],
                           ),
                         ],
@@ -253,7 +258,7 @@ class _SpeechRecognitionScreenState extends State<SpeechRecognitionScreen> {
         ),
         GestureDetector(
           behavior: HitTestBehavior.translucent,
-          onTap: getRecorderFn(),
+          onTap: getRecorderFn,
           child: Container(
             height: 90,
             child: _recorder.isRecording == false

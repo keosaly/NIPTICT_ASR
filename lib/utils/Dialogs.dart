@@ -12,12 +12,12 @@ class Dialogs {
               onWillPop: () async => false,
               child: SimpleDialog(
                   key: key,
-                  backgroundColor: HexColor('#0D47A1'),
+                  backgroundColor: Colors.blue,
                   children: <Widget>[
                     Center(
                       child: Column(children: [
                         CircularProgressIndicator(
-                          backgroundColor: Colors.white12,
+                          backgroundColor: Colors.white,
                         ),
                         SizedBox(
                           height: 10,

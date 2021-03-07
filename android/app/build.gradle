@@ -45,7 +45,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "kh.edu.cadt.khmerasr"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -67,6 +67,12 @@ android {
             signingConfig signingConfigs.release
         }
     }
+
+    configurations {
+        all {
+            exclude group: "com.arthenica", module: "mobile-ffmpeg-full"
+        }
+    }
 }
 
 flutter {
@@ -76,3 +82,4 @@ flutter {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
+

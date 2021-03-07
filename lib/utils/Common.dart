@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 const SERVER_URL = 'ws://103.16.63.37:9002/api/asr/';
 const int SAMPLE_RATE = 16000;
@@ -18,4 +19,9 @@ Future<bool> checkInternetConnection() async {
     return false;
   }
   return true;
+}
+
+Future<String> getTmpDirPath() async {
+  Directory tempDir = await getTemporaryDirectory();
+  return tempDir.path;
 }

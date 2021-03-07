@@ -7,8 +7,11 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'dart:typed_data' show Uint8List;
 import 'package:khmerasr/ui/widget/RipplesAnimation.dart';
 import 'package:clipboard/clipboard.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../utils/Common.dart';
 import '../utils/Toast.dart';
+import '../utils/FFmpeg.dart';
+import '../utils/Dialogs.dart';
 
 class VoiceUploadScreen extends StatefulWidget {
   @override
@@ -31,13 +34,16 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
   FlutterSoundPlayer _mPlayer = FlutterSoundPlayer();
 
   // file
-  File _audioFile;
-  FilePickerResult _pathFile;
-  String _fileName = '';
+  String _audioFilePath = '';
+  String _audioFilename = '';
+
+  final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
   @override
   void initState() {
     super.initState();
+    initPermission();
+
     _mPlayer.openAudioSession().then((value) {
       setState(() {});
     });
@@ -53,6 +59,13 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
     }
 
     super.dispose();
+  }
+
+  initPermission() async {
+    final status = await Permission.storage.request();
+    if (status != PermissionStatus.granted) {
+      throw RecordingPermissionException('Storage permission not granted');
+    }
   }
 
   Future initPlayer() async {
@@ -96,69 +109,85 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
   }
 
   Future<void> playStreaming() async {
-    if (_pathFile != null) {
-      _audioFile = File(_pathFile.files.single.path);
+    if (_audioFilePath != null) {
       if (_mPlayer.isPlaying == true) {
-        stopPlayer().then((value) => setState(() {}));
-        stopWebSocket();
+        await stopPlayer().then((value) => setState(() {}));
       } else {
-        var status = await checkInternetConnection();
-        if (status == false) {
-          showErrorToast(context, 'មិនមានការតភ្ជាប់អ៊ីនធឺណិតទេ!');
-          return;
-        }
-
-        status = await startWebSocket();
-        if (status == false) {
-          showErrorToast(context, "មានបញ្ហាតភ្ជាប់ទៅកាន់ម៉ាស៊ីនមេ!");
-          return;
-        }
-        _textController.text = "";
-        _sendMessage(_audioFile.path).then((value) => setState(() {}));
+        await _processStreaming(_audioFilePath)
+            .then((value) => setState(() {}));
       }
     } else {
-      showWarningToast(context, "សូមជ្រើសរើសឯកសារសំឡេងជាមុន!");
+      showWarningToast(context, "សូមជ្រើសរើសឯកសារសំឡេង!");
     }
   }
 
-  Future<void> _sendMessage(String filePath) async {
+  Future<void> _processStreaming(String filePath) async {
+    var status = await checkInternetConnection();
+    if (status == false) {
+      showErrorToast(context, 'មិនមានការតភ្ជាប់អ៊ីនធឺណិតទេ!');
+      return;
+    }
+
+    status = await startWebSocket();
+    if (status == false) {
+      showErrorToast(context, "មានបញ្ហាតភ្ជាប់ទៅកាន់ម៉ាស៊ីនមេ!");
+      return;
+    }
+
+    await initPlayer();
+
     _beforeResult = '';
     _previousResult = '';
-
-    // init player
-    await initPlayer();
 
     final bufferedStream = bufferChunkedStream(File(filePath).openRead());
     final iterator = ChunkedStreamIterator(bufferedStream);
 
     var data;
-    while (true) {
+    while (_mPlayer.isPlaying) {
       data = await iterator.read(tBlockSize);
       if (data.isEmpty) {
-        print('End of file reached');
         break;
       }
       await _mPlayer.feedFromStream(Uint8List.fromList(data));
       _webSocketChannel.sink.add(data);
     }
 
-    // stop player
     await stopPlayer();
+    await stopWebSocket();
   }
 
   void openFilePicker() async {
-    _pathFile = await FilePicker.platform.pickFiles(
+    final filePicker = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['wav'],
+      allowedExtensions: ['wav', 'mp3', 'ogg', 'm4a'],
     );
-    _fileName = _pathFile.files.single.name;
-    _textController.text = "";
-    if (_pathFile != null) {
+    if (filePicker != null) {
+      var selectFile = filePicker.files.single;
+
+      _audioFilePath = selectFile.path;
+      _audioFilename = selectFile.name;
+      setState(() {});
+
+      Map audioInfo = await getMediaInfo(selectFile.path);
+      var format = audioInfo['format_name'];
+      var sampleRate = audioInfo['sample_rate'];
+      var channel = audioInfo['nb_streams'];
+
+      if (format != 'wav' || sampleRate != '16000' || channel != 1) {
+        final tmpFile = File(await getTmpDirPath() + '/audio.wav');
+        if (await tmpFile.exists() == true) {
+          await tmpFile.delete();
+        }
+
+        Dialogs.showLoadingDialog(context, _keyLoader, "កំពុងដំណើរការ....");
+        await preprocessAudio(selectFile.path, tmpFile.path);
+        Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+
+        _audioFilePath = tmpFile.path;
+      }
+
       showToast(context, "ឯកសារសំឡេងត្រូវបានជ្រើសរើស!");
-    } else {
-      showToast(context, "ឯកសារសំឡេងមិនត្រឹមត្រូវ!");
     }
-    setState(() {});
   }
 
   @override
@@ -209,7 +238,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
                               color: Colors.indigo,
                             ),
                             Text(
-                              _fileName,
+                              _audioFilename,
                               style: TextStyle(color: Colors.indigo),
                             ),
                           ],

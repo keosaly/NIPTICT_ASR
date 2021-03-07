@@ -13,7 +13,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  var switch_screen = 1;
+  var switchScreen = 1;
   var _titleBar = 'បំលែងសំឡេងនិយាយទៅជាអត្ថបទ';
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class _MainPageState extends State<MainPage> {
                   onTap: () {
                     setState(() {
                       _titleBar = 'បំលែងសំឡេងនិយាយទៅជាអត្ថបទ';
-                      switch_screen = 1;
+                      switchScreen = 1;
                     });
                     Navigator.of(context).pop();
                   }),
@@ -49,7 +49,7 @@ class _MainPageState extends State<MainPage> {
                   onTap: () {
                     setState(() {
                       _titleBar = 'បំលែងឯកសារសំឡេងទៅជាអត្ថបទ';
-                      switch_screen = 2;
+                      switchScreen = 2;
                     });
                     Navigator.of(context).pop();
                   }),
@@ -59,7 +59,7 @@ class _MainPageState extends State<MainPage> {
                   onTap: () {
                     setState(() {
                       _titleBar = 'អំពីយើង';
-                      switch_screen = 3;
+                      switchScreen = 3;
                     });
                     Navigator.of(context).pop();
                   }),
@@ -80,7 +80,7 @@ class _MainPageState extends State<MainPage> {
           backgroundColor: HexColor('#0D47A1'),
           shadowColor: Colors.transparent,
         ),
-        body: routeScreen(switch_screen));
+        body: routeScreen(switchScreen));
   }
 
   Widget routeScreen(switchScreen) {

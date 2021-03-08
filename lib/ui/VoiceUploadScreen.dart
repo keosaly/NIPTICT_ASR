@@ -259,6 +259,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
                             //alignment: MainAxisAlignment.end,
                             children: [
                               IconButton(
+                                tooltip: 'ចម្លងអត្ថបទ',
                                 icon: Icon(Icons.copy),
                                 color: Colors.indigo,
                                 onPressed: () {
@@ -273,6 +274,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
                                 },
                               ),
                               IconButton(
+                                tooltip: 'បញ្ចូលឯកសារ',
                                 icon: Icon(Icons.upload_file),
                                 color: Colors.indigo,
                                 onPressed: _mPlayer.isPlaying == false

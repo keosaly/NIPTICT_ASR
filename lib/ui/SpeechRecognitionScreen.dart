@@ -217,6 +217,7 @@ class _SpeechRecognitionScreenState extends State<SpeechRecognitionScreen> {
                             //alignment: MainAxisAlignment.end,
                             children: [
                               IconButton(
+                                tooltip: 'ចម្លងអត្ថបទ',
                                 icon: Icon(Icons.copy),
                                 color: Colors.indigo,
                                 onPressed: () {
@@ -232,6 +233,7 @@ class _SpeechRecognitionScreenState extends State<SpeechRecognitionScreen> {
                                 },
                               ),
                               IconButton(
+                                  tooltip: 'លុបអត្ថបទ',
                                   icon: Icon(Icons.delete),
                                   color: Colors.indigo,
                                   onPressed: _recorder.isRecording

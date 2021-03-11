@@ -25,3 +25,7 @@ Future<String> getTmpDirPath() async {
   Directory tempDir = await getTemporaryDirectory();
   return tempDir.path;
 }
+
+String removeSpaces(String input) {
+  return input.replaceAll(new RegExp(r"\s{1}"), "");
+}

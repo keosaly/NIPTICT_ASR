@@ -23,7 +23,8 @@ const int tBlockSize = 4000;
 
 class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
   // ui
-  var _textController = new TextEditingController();
+  TextEditingController _textController = new TextEditingController();
+  ScrollController _scrollController = ScrollController();
 
   // web socket
   IOWebSocketChannel _webSocketChannel;
@@ -37,7 +38,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
   String _audioFilePath;
   String _audioFilename = '';
 
-  final GlobalKey<State> _keyLoader = new GlobalKey<State>();
+  GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
   @override
   void initState() {
@@ -92,10 +93,14 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
           _previousResult += _beforeResult + ' ';
         }
       } else {
+        if (message.split(' ').length == 1 && message != _beforeResult) {
+          _previousResult += _beforeResult + ' ';
+        }
+
         _textController.text = _previousResult + message;
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
         setState(() {});
       }
-
       _beforeResult = message;
     });
 
@@ -216,6 +221,7 @@ class _VoiceUploadScreenState extends State<VoiceUploadScreen> {
                       padding: const EdgeInsets.only(left: 5, right: 5),
                       child: Container(
                         child: SingleChildScrollView(
+                          controller: _scrollController,
                           child: TextField(
                             controller: _textController,
                             maxLines: null,
